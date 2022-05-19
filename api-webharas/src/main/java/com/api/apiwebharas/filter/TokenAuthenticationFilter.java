@@ -1,6 +1,6 @@
 package com.api.apiwebharas.filter;
 
-import com.api.apiwebharas.entity.Usuario;
+import com.api.apiwebharas.dto.UsuarioContext;
 import com.api.apiwebharas.security.TokenService;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -41,17 +41,12 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
 		return token.substring(7, token.length());
 	}
 
-	private void authenticateFromToken(String tokenFromHeader) {
-//		Integer id = tokenService.getTokenId(tokenFromHeader);
-		//get from token
+	private void authenticateFromToken(String token) {
+		UsuarioContext user = tokenService.getUserContextFromJwtToken(token);
 
-		Usuario optionalUser = new Usuario();
+		if(user != null) {
 
-		if(optionalUser != null) {
-
-			Usuario user = optionalUser;
-
-			UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(user, null, user.getRoles());
+			UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
 			SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
 		}
 	}
