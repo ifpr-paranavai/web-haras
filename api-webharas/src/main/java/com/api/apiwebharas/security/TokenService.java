@@ -1,16 +1,19 @@
 package com.api.apiwebharas.security;
 
 import com.api.apiwebharas.dto.RoleDTO;
+import com.api.apiwebharas.dto.UsuarioContext;
 import com.api.apiwebharas.entity.Role;
 import com.api.apiwebharas.entity.Usuario;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
@@ -26,6 +29,11 @@ public class TokenService {
 	private String secret;
 
 	ObjectMapper objectMapper = new ObjectMapper();
+
+	public Usuario getUserFromContext() {
+		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+		return ((Usuario)authentication.getPrincipal());
+	}
 
 	public String generateToken(Authentication authentication) {
 
@@ -90,6 +98,22 @@ public class TokenService {
 		jwtTokenData.setUsuario(jwtUsuarioData);
 
 		return jwtTokenData;
+	}
+
+	public Date getExpirationFromToken(String token) {
+		return getAllClaimsFromToken(token).getExpiration();
+	}
+
+	public UsuarioContext getUserContextFromJwtToken(String token) {
+		Map<String, Object> usuarioObject = (Map<String, Object>) getAllClaimsFromToken(token).get("usuario");
+//		Usuario usuario = new Usuario();
+//		usuario.setId(Long.parseLong(String.valueOf(usuarioObject.get("id"))));
+		UsuarioContext usuario = objectMapper.convertValue(usuarioObject, UsuarioContext.class);
+		return usuario;
+	}
+
+	private Claims getAllClaimsFromToken(String token) {
+		return Jwts.parserBuilder().setSigningKey(secret).build().parseClaimsJws(token).getBody();
 	}
 
 }
