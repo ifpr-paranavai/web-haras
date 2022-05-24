@@ -32,3 +32,5 @@ api-webharas/build/
 
 ### VS Code ###
 api-webharas/.vscode/
+.idea/*
+api-webharas/src/main/resources/application.yml
