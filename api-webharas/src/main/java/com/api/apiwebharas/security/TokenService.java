@@ -1,14 +1,9 @@
 package com.api.apiwebharas.security;
 
-import com.api.apiwebharas.dto.RoleDTO;
-import com.api.apiwebharas.dto.UsuarioContext;
-import com.api.apiwebharas.entity.Role;
 import com.api.apiwebharas.entity.Usuario;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
@@ -30,32 +25,13 @@ public class TokenService {
 
 	ObjectMapper objectMapper = new ObjectMapper();
 
-	public Usuario getUserFromContext() {
+	public UsuarioContext getUserFromContext() {
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-		return ((Usuario)authentication.getPrincipal());
+		return ((UsuarioContext)authentication.getPrincipal());
 	}
 
-	public String generateToken(Authentication authentication) {
-
-		Usuario usuario = (Usuario) authentication.getPrincipal();
-
-		Date now = new Date();
-		Date exp = new Date(now.getTime() + Long.parseLong(expiration));
-
-		SecretKey secretKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode(secret));
-
-		return Jwts.builder().setIssuer("HO_TOKEN")
-                             .setSubject(usuario.getId().toString())
-                             .setIssuedAt(new Date())
-				             .setExpiration(exp)
-                             .signWith(secretKey).compact();
-	}
-
-	public String generateToken(Usuario usuario) {
-		JwtTokenData jwtTokenData = generateTokenData(usuario);
-
-//		Map<String, Object> claims = new HashMap<>();
-//		claims.putAll(customerData);
+	public String generateJwtToken(Usuario usuario) {
+		JwtTokenData jwtTokenData = generateJwtTokenData(usuario);
 
 		Map<String, Object> claims = objectMapper.convertValue(jwtTokenData, Map.class);
 
@@ -72,6 +48,23 @@ public class TokenService {
 				.signWith(secretKey).compact();
 	}
 
+	private JwtTokenData generateJwtTokenData(Usuario usuario) {
+		JwtTokenData jwtTokenData = new JwtTokenData();
+
+		UsuarioContext usuarioContext = new UsuarioContext();
+		usuarioContext.setId(usuario.getId());
+		usuarioContext.setEmail(usuario.getEmail());
+		usuarioContext.setNome(usuario.getNome());
+		List<String> roles = new ArrayList<>();
+		usuario.getAuthorities().forEach((grantedAuthority) -> roles.add(grantedAuthority.getAuthority()));
+
+		usuarioContext.setRoles(roles);
+
+		jwtTokenData.setUsuario(usuarioContext);
+
+		return jwtTokenData;
+	}
+
 	public boolean isTokenValid(String token) {
 		try {
 			Jwts.parser().setSigningKey(secret).parseClaimsJws(token);
@@ -81,39 +74,26 @@ public class TokenService {
 		}
 	}
 
-	private JwtTokenData generateTokenData(Usuario usuario) {
-		JwtTokenData jwtTokenData = new JwtTokenData();
-
-		JwtUsuarioData jwtUsuarioData = new JwtUsuarioData();
-		jwtUsuarioData.setId(usuario.getId());
-		jwtUsuarioData.setEmail(usuario.getEmail());
-		jwtUsuarioData.setNome(usuario.getNome());
-//		Set<RoleDTO> roles = objectMapper.convertValue(usuario.getRoles(), new TypeReference<Set<RoleDTO>>() {});
-		List<String> roles = new ArrayList<>();
-		for(Role role : usuario.getRoles()) {
-			roles.add(role.getNome());
-		}
-		jwtUsuarioData.setRoles(roles);
-
-		jwtTokenData.setUsuario(jwtUsuarioData);
-
-		return jwtTokenData;
-	}
-
 	public Date getExpirationFromToken(String token) {
-		return getAllClaimsFromToken(token).getExpiration();
+		return getAllClaimsFromJwtToken(token).getExpiration();
 	}
 
 	public UsuarioContext getUserContextFromJwtToken(String token) {
-		Map<String, Object> usuarioObject = (Map<String, Object>) getAllClaimsFromToken(token).get("usuario");
-//		Usuario usuario = new Usuario();
-//		usuario.setId(Long.parseLong(String.valueOf(usuarioObject.get("id"))));
-		UsuarioContext usuario = objectMapper.convertValue(usuarioObject, UsuarioContext.class);
-		return usuario;
+		Map<String, Object> usuarioObject = (Map<String, Object>) getAllClaimsFromJwtToken(token).get("usuario");
+
+		UsuarioContext usuarioContext = new UsuarioContext();
+		usuarioContext.setId(Long.parseLong(String.valueOf(usuarioObject.get("id"))));
+		usuarioContext.setEmail(String.valueOf(usuarioObject.get("email")));
+		usuarioContext.setNome(String.valueOf(usuarioObject.get("nome")));
+		usuarioContext.setRoles((List<String>) usuarioObject.get("roles"));
+//		UsuarioContext usuario = objectMapper.convertValue(usuarioObject, UsuarioContext.class);
+		return usuarioContext;
 	}
 
-	private Claims getAllClaimsFromToken(String token) {
+	private Claims getAllClaimsFromJwtToken(String token) {
 		return Jwts.parserBuilder().setSigningKey(secret).build().parseClaimsJws(token).getBody();
 	}
+
+
 
 }

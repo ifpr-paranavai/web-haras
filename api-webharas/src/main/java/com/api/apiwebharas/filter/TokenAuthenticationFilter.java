@@ -1,6 +1,6 @@
 package com.api.apiwebharas.filter;
 
-import com.api.apiwebharas.dto.UsuarioContext;
+import com.api.apiwebharas.security.UsuarioContext;
 import com.api.apiwebharas.security.TokenService;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -45,7 +45,6 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
 		UsuarioContext user = tokenService.getUserContextFromJwtToken(token);
 
 		if(user != null) {
-
 			UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
 			SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
 		}

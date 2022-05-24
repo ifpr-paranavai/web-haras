@@ -27,7 +27,7 @@ public class AuthService {
 
         Usuario usuario = (Usuario) authentication.getPrincipal();
 
-        String token = tokenService.generateToken(usuario);
+        String token = tokenService.generateJwtToken(usuario);
 
         return token;
 //        return ResponseEntity.ok(TokenDTO.builder().type("Bearer").token(token).build());

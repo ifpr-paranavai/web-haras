@@ -1,4 +1,4 @@
-package com.api.apiwebharas.dto;
+package com.api.apiwebharas.security;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -12,10 +12,10 @@ import java.util.List;
 @Getter
 @Setter
 public class UsuarioContext {
-    Long id;
-    String nome;
-    String email;
-    List<String> roles;
+    private Long id;
+    private String nome;
+    private String email;
+    private List<String> roles;
 
     public Collection<? extends GrantedAuthority> getAuthorities() {
         List<GrantedAuthority> authorities = new ArrayList<GrantedAuthority>();
