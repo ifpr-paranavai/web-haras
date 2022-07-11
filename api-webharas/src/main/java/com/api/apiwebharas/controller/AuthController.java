@@ -1,5 +1,6 @@
 package com.api.apiwebharas.controller;
 
+import com.api.apiwebharas.dto.ApiResponseDTO;
 import com.api.apiwebharas.dto.LoginDTO;
 import com.api.apiwebharas.dto.TokenDTO;
 import com.api.apiwebharas.service.AuthService;
@@ -18,10 +19,9 @@ public class AuthController {
     @Autowired
     private AuthService authService;
 
-    @PostMapping
-    public ResponseEntity<TokenDTO> auth(@RequestBody @Validated LoginDTO loginDTO){
-        String token = authService.login(loginDTO);
-        return ResponseEntity.ok(TokenDTO.builder().type("Bearer").token(token).build());
-
+    @PostMapping("/login")
+    public ResponseEntity<ApiResponseDTO<TokenDTO>> auth(@RequestBody @Validated LoginDTO loginDTO){
+        ApiResponseDTO apiResponseDTO = authService.login(loginDTO);
+        return ResponseEntity.status(apiResponseDTO.getStatus().value()).body(apiResponseDTO);
     }
 }

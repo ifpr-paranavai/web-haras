@@ -2,8 +2,12 @@ package com.api.apiwebharas.filter;
 
 import com.api.apiwebharas.security.UsuarioContext;
 import com.api.apiwebharas.security.TokenService;
+import org.hibernate.event.spi.SaveOrUpdateEvent;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.security.web.util.matcher.OrRequestMatcher;
+import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import javax.servlet.FilterChain;
@@ -11,8 +15,12 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class TokenAuthenticationFilter extends OncePerRequestFilter {
+
+	static final String[] PERMIT_ALL_PATTERNS = new String[] {"/v1/auth/**"};
 
 	private final TokenService tokenService;
 
@@ -21,14 +29,15 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
 	}
 
 	@Override
-	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException { ;
+		if(checkIfNeedFilter(request)){
+			String tokenFromHeader = getTokenFromHeader(request);
+			boolean tokenValid = tokenService.isTokenValid(tokenFromHeader);
+			if(tokenValid) {
+				this.authenticateFromToken(tokenFromHeader);
+			}
 
-		String tokenFromHeader = getTokenFromHeader(request);
-		boolean tokenValid = tokenService.isTokenValid(tokenFromHeader);
-		if(tokenValid) {
-			this.authenticateFromToken(tokenFromHeader);
 		}
-
 		filterChain.doFilter(request, response);
 	}
 
@@ -48,6 +57,15 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
 			UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities());
 			SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
 		}
+	}
+
+	private boolean checkIfNeedFilter(HttpServletRequest request) {
+		List<RequestMatcher> matchers = new ArrayList<>();
+		for (String pattern : PERMIT_ALL_PATTERNS) {
+			matchers.add(new AntPathRequestMatcher(pattern));
+		}
+		RequestMatcher ignoreRequestMatcher = new OrRequestMatcher(matchers);
+		return !(ignoreRequestMatcher.matches((HttpServletRequest) request));
 	}
 
 }

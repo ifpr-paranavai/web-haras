@@ -1,9 +1,12 @@
 package com.api.apiwebharas.service;
 
+import com.api.apiwebharas.dto.ApiResponseDTO;
 import com.api.apiwebharas.dto.LoginDTO;
+import com.api.apiwebharas.dto.TokenDTO;
 import com.api.apiwebharas.entity.Usuario;
 import com.api.apiwebharas.security.TokenService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -18,7 +21,8 @@ public class AuthService {
     @Autowired
     private TokenService tokenService;
 
-    public String login(LoginDTO loginDTO) {
+    public ApiResponseDTO login(LoginDTO loginDTO) {
+        ApiResponseDTO apiResponseDTO = new ApiResponseDTO();
         BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder();
         bCryptPasswordEncoder.encode(loginDTO.getSenha());
         UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(loginDTO.getUsuario(), loginDTO.getSenha());
@@ -29,7 +33,14 @@ public class AuthService {
 
         String token = tokenService.generateJwtToken(usuario);
 
-        return token;
-//        return ResponseEntity.ok(TokenDTO.builder().type("Bearer").token(token).build());
+        TokenDTO tokenDTO = new TokenDTO();
+        tokenDTO.setType("Bearer");
+        tokenDTO.setToken(token);
+
+        apiResponseDTO.setData(tokenDTO);
+        apiResponseDTO.setStatus(HttpStatus.OK);
+        apiResponseDTO.setMessage("Login realizado com sucesso");
+
+        return apiResponseDTO;
     }
 }

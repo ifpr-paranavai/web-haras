@@ -15,6 +15,12 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.Arrays;
+import java.util.List;
 
 @EnableWebSecurity
 @Configuration
@@ -49,8 +55,14 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
                 .anyRequest().authenticated()
                 .and().csrf().disable()
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .and().cors().configurationSource(request -> {
+                    var cors = new CorsConfiguration();
+                    cors.setAllowedOrigins(List.of("*"));
+                    cors.setAllowedMethods(List.of("GET","POST", "PUT", "DELETE"));
+                    cors.setAllowedHeaders(List.of("*"));
+                    return cors;
+                })
                 .and().addFilterBefore(new TokenAuthenticationFilter(tokenService), UsernamePasswordAuthenticationFilter.class);
-                //.and().cors().configurationSource(request -> corsConfiguration)
 
 
     }

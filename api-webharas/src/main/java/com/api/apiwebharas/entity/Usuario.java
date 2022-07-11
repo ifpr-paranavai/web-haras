@@ -37,11 +37,21 @@ public class Usuario implements UserDetails {
     @Column(name = "nome")
     private String nome;
 
+    @Column(name = "cpf")
+    private String cpf;
+
     @Column(name = "telefone")
     private String telefone;
 
+    @Column(name = "whatsapp")
+    private String whatsapp;
+
     @ManyToMany(fetch = FetchType.EAGER)
     private Set<Role> roles;
+
+    @ManyToOne
+    @JoinColumn(name = "cidade_id")
+    private Cidade cidade;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
